@@ -2,6 +2,7 @@
 description: Look up movies and showtimes at Danish cinemas (kino.dk)
 argument-hint: <what's showing in [city] [today/tomorrow/date] [around time]>
 allowed-tools: [Bash, Read]
+tags: [cinema, biograf, kino, movie, film, showtime, forestilling, visningstider, hvad går i biografen, what's showing]
 ---
 
 # Kino - Danish Cinema Lookup
@@ -60,11 +61,57 @@ If the user names a specific movie, or is responding to the follow-up from Flow 
 - "what movies are playing" → Flow A: run `overview` (no filters), list movies, ask follow-up
 - "find avatar showtimes" → Flow B: `node scripts/kino_fetch.mjs showtimes --movie "avatar"`
 
-### Step 3: Present results (Flow B only)
+### Step 3: Present results
 
-Present the output in a clean, readable format. If the results are very long, summarize the key options. Highlight:
-- Movie names and times
-- Available seats (mention if running low)
-- Cinema names and locations
+Use the templates below for consistent formatting.
 
-If no results are found, suggest broadening the search (remove time filter, try a different date, etc.).
+#### Flow A: Movie list
+
+```
+Her er filmene der vises i {city} {date} {time context}:
+
+1. Movie Title One
+2. Movie Title Two
+3. Movie Title Three
+
+Hvilken film kunne du tænke dig at se?
+```
+
+#### Flow B: Single movie — details + showtimes
+
+```
+**{Movie Title}**
+- Spilletid: {runtime} min
+- Genre: {genres}
+- Bruger-rating: {stars} ({score}/6)
+- Presse-rating: {stars} ({score}/6)
+- [IMDB]({imdb_url})
+
+**Visningstider {date} — {Cinema Name}:**
+
+| Tid | Sal | Pladser | Billetter |
+|-----|-----|---------|-----------|
+| {HH:MM} | {room} | {seats} ledige | [Køb billet]({ticket_url}) |
+```
+
+If multiple cinemas, repeat the heading + table for each cinema.
+
+#### Flow C: Multiple movies — full program for a cinema
+
+When the user asks for a full program (multiple movies at one cinema), use "Spilletid" instead of "Sal" since the room is less relevant when browsing across films:
+
+```
+**Fuldt program {date} — {Cinema Name}:**
+
+| Tid | Film | Spilletid | Pladser | Billetter |
+|-----|------|-----------|---------|-----------|
+| {HH:MM} | {movie title} | {runtime} min | {seats} ledige | [Køb billet]({ticket_url}) |
+```
+
+Sort rows chronologically by showtime.
+
+#### Formatting rules
+- Omit rating/IMDB rows if data is not available
+- If seats < 30, add a note that seats are running low
+- If no results are found, suggest broadening the search (remove time filter, try a different date, etc.)
+- Respond in the same language as the user's query
